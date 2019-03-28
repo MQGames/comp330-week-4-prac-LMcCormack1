@@ -23,19 +23,19 @@ const InputClass = function() {
     input.onKeyDown = function(event) {
         switch (event.key) {
             case "ArrowLeft": 
-                this.leftPressed = true;
+                input.leftPressed = true;
                 break;
 
             case "ArrowRight": 
-                this.rightPressed = true;
+                input.rightPressed = true;
                 break;
 
             case "ArrowDown":
-                this.downPressed = true;
+                input.downPressed = true;
                 break;
 
             case "ArrowUp":
-                this.upPressed = true;
+                input.upPressed = true;
                 break;
         }
     }
@@ -43,19 +43,19 @@ const InputClass = function() {
     input.onKeyUp = function(event) {
         switch (event.key) {
             case "ArrowLeft": 
-                this.leftPressed = false;
+                input.leftPressed = false;
                 break;
 
             case "ArrowRight": 
-                this.rightPressed = false;
+                input.rightPressed = false;
                 break;
 
             case "ArrowDown":
-                this.downPressed = false;
+                input.downPressed = false;
                 break;
 
             case "ArrowUp":
-                this.upPressed = false;
+                input.upPressed = false;
                 break;
         }
     }
