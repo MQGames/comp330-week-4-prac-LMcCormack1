@@ -4,32 +4,30 @@
 
 const vertexShaderSource = `
 attribute vec4 a_position;
-uniform float u_rotation; // radians
-uniform vec2 u_translation; 
-uniform vec2 u_scale;
+uniform mat3 u_worldMatrix;
+uniform mat3 u_viewMatrix;
 
 void main() {
-    // scale
-    float x0 = a_position.x * u_scale.x;
-    float y0 = a_position.y * u_scale.y;
+    //convert to homogenous
+    vec3 p = vec3(a_position.xy, 1);
 
-    // rotate
-    float x = x0 * cos(u_rotation) - y0 * sin(u_rotation);
-    float y = x0 * sin(u_rotation) + y0 * cos(u_rotation);
+    //Multiply the above by the world matrix
+    p = u_worldMatrix * p;
 
-    // translate
-    x = x + u_translation.x;
-    y = y + u_translation.y;
+    //Multiply by the view matrix
+    p = u_viewMatrix * p;
 
-    gl_Position = vec4(x,y,0,1);
+    //output this to the gl_Position
+    gl_Position = vec4(p.xy,0,1);
 }
 `;
 
 const fragmentShaderSource = `
 precision mediump float;
+uniform vec4 u_colour;
 
 void main() {
-  gl_FragColor = vec4(1,0,0,1); 
+  gl_FragColor = u_colour; 
 }
 `;
 
@@ -89,10 +87,12 @@ function createProgram(gl, vertexShader, fragmentShader) {
 function main() {
 
     // === Initialisation ===
+    const resolution = 50; 
 
     // get the canvas element & gl rendering 
     const canvas = document.getElementById("c");
     const gl = canvas.getContext("webgl");
+    const snake = new Snake();
 
     if (gl === null) {
         window.alert("WebGL not supported!");
@@ -108,9 +108,9 @@ function main() {
 
     // Initialise the shader attributes & uniforms
     const positionAttribute = gl.getAttribLocation(program, "a_position");
-    const rotationUniform = gl.getUniformLocation(program, "u_rotation");
-    const translationUniform = gl.getUniformLocation(program, "u_translation");
-    const scaleUniform = gl.getUniformLocation(program, "u_scale");
+    const worldMatrixUniform = gl.getUniformLocation(program, "u_worldMatrix");
+    const colourUniform = gl.getUniformLocation(program, "u_colour");
+    const viewMatrixUniform = gl.getUniformLocation(program, "u_viewMatrix");
 
     // Initialise the array buffer
     const positionBuffer = gl.createBuffer();
@@ -123,7 +123,7 @@ function main() {
     // update objects in the scene
     let update = function(deltaTime) {
         check(isNumber(deltaTime));
-
+        snake.update(deltaTime);
         // update things
     };
 
@@ -135,14 +135,22 @@ function main() {
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         // set the uniforms
-        gl.uniform2f(translationUniform, -0.5, 0);          // translate left by 0.5 units
-        gl.uniform1f(rotationUniform, 45 * Math.PI / 180);  // rotate by 45 degrees (converted to radians)
-        gl.uniform2f(scaleUniform, 0.5, 0.5);               // scale down by 0.5
+        let matrix = Matrix.identity();
+        matrix = Matrix.multiply(matrix, Matrix.translation(-0.5,0));
+        matrix = Matrix.multiply(matrix, Matrix.rotation(45 * Math.PI / 180));
+        matrix = Matrix.multiply(matrix, Matrix.scale(0.5, 0.5));
+        gl.uniformMatrix3fv(worldMatrixUniform, false, matrix);
+        
+        //scale the view to the matrix
+        const sx = 2 * resolution / canvas.width;
+        const sy = 2 * resolution / canvas.height;
+        const viewMatrix = Matrix.scale(sx, sy);
+        gl.uniformMatrix3fv(viewMatrixUniform, false, viewMatrix);
 
-        // draw the shape
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0,0,1,0,0,1]), gl.STATIC_DRAW);
-        gl.drawArrays(gl.TRIANGLES, 0, 3);   
+
+        snake.render(gl, worldMatrixUniform, colourUniform); 
     };
+
 
     // animation loop
     let oldTime = 0;
