@@ -98,7 +98,7 @@ function main() {
         window.alert("WebGL not supported!");
         return;
     }
-    
+
     // create GLSL shaders, upload the GLSL source, compile the shaders
     const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
